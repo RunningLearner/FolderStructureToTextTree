@@ -1,0 +1,20 @@
+﻿<Window x:Class="FolderStructureToTextTree.Views.TextTreeDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="텍스트 트리" Height="400" Width="600" WindowStartupLocation="CenterOwner" ResizeMode="CanResize">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <!-- 텍스트 트리 내용이 표시될 TextBox (읽기 전용) -->
+        <TextBox x:Name="TextTreeTextBox" Grid.Row="0" 
+                 FontFamily="Consolas" FontSize="12"
+                 TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" IsReadOnly="True"/>
+        <!-- 버튼 영역 -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,0">
+            <Button x:Name="CopyButton" Content="복사하기" Width="80" Margin="0,0,10,0" Click="CopyButton_Click"/>
+            <Button x:Name="CloseButton" Content="닫기" Width="80" Click="CloseButton_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

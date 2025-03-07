@@ -5,6 +5,8 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Text;
+using System.Windows.Data;
 using System.Windows.Input;
 
 namespace FolderStructureToTextTree.ViewModels;
@@ -14,13 +16,41 @@ public class FolderTreeViewModel : INotifyPropertyChanged
     /// 트리 뷰에 바인딩할 루트 폴더 컬렉션입니다.
     /// </summary>
     public ObservableCollection<FolderItem> RootItems { get; set; } = new ObservableCollection<FolderItem>();
+    public ICollectionView RootItemsView { get; }
 
     public ICommand LoadTreeCommand { get; }
+    public ICommand ConvertTreeCommand { get; }
+    public ICommand ToggleExcludeCommand { get; }
+
 
     public FolderTreeViewModel()
     {
-        // LoadTreeCommand는 폴더 구조를 불러오는 명령입니다.
         LoadTreeCommand = new RelayCommand(LoadTree);
+        ConvertTreeCommand = new RelayCommand(ConvertTree);
+        ToggleExcludeCommand = new RelayCommand(ToggleExclude);
+
+        // 컬렉션 뷰 생성 및 필터 설정
+        RootItemsView = CollectionViewSource.GetDefaultView(RootItems);
+        RootItemsView.Filter = ExcludeFilter;
+    }
+
+    private bool ExcludeFilter(object obj)
+    {
+        if (obj is FolderItem item)
+        {
+            return !item.IsExcluded;
+        }
+        return true;
+    }
+
+    private void ToggleExclude(object parameter)
+    {
+        if (parameter is FolderItem item)
+        {
+            item.IsExcluded = !item.IsExcluded;
+            // 필터를 새로 고침하여 변경 반영
+            RootItemsView.Refresh();
+        }
     }
 
     /// <summary>
@@ -78,6 +108,45 @@ public class FolderTreeViewModel : INotifyPropertyChanged
         }
         return item;
     }
+
+    /// <summary>
+    /// 제외되지 않은 폴더/파일들을 기반으로 텍스트 트리 문자열을 생성합니다.
+    /// </summary>
+    private void ConvertTree(object parameter)
+    {
+        var sb = new StringBuilder();
+        foreach (var item in RootItems)
+        {
+            AppendItem(sb, item, "");
+        }
+        string result = sb.ToString();
+
+        // 사용자 정의 대화상자를 생성하고 표시합니다.
+        var dialog = new FolderStructureToTextTree.Views.TextTreeDialog(result);
+        dialog.Owner = System.Windows.Application.Current.MainWindow;
+        dialog.ShowDialog();
+    }
+
+    private void AppendItem(StringBuilder sb, FolderItem item, string indent)
+    {
+        if (item.IsExcluded)
+            return;
+
+        sb.Append(indent);
+        sb.Append(item.IsFolder ? "├── " : "└── ");
+        sb.AppendLine(item.Name);
+
+        if (item.IsFolder)
+        {
+            // 다음 들여쓰기, 마지막 항목 여부를 판단하여 수정할 수 있습니다.
+            string childIndent = indent + "    ";
+            foreach (var child in item.Children)
+            {
+                AppendItem(sb, child, childIndent);
+            }
+        }
+    }
+
 
     #region INotifyPropertyChanged 구현
     public event PropertyChangedEventHandler PropertyChanged;

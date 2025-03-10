@@ -24,9 +24,26 @@ public class FolderItem : INotifyPropertyChanged
             {
                 _isExcluded = value;
                 OnPropertyChanged();
+                // EffectiveIsExcluded 속성 변경 알림 추가
+                OnPropertyChanged(nameof(EffectiveIsExcluded));
+                // 자식 아이템에게도 EffectiveIsExcluded 변경을 알림
+                UpdateChildrenEffectiveExclusion();
             }
         }
     }
+
+    /// <summary>
+    /// 현재 아이템 또는 상위 아이템이 제외된 경우 true를 반환합니다.
+    /// </summary>
+    public bool EffectiveIsExcluded
+    {
+        get => IsExcluded || (Parent != null && Parent.EffectiveIsExcluded);
+    }
+
+    /// <summary>
+    /// 상위 폴더를 참조합니다.
+    /// </summary>
+    public FolderItem Parent { get; set; }
 
     /// <summary>
     /// 항목의 이름입니다.
@@ -52,6 +69,19 @@ public class FolderItem : INotifyPropertyChanged
     /// 폴더인 경우에만 하위 항목이 존재합니다.
     /// </summary>
     public ObservableCollection<FolderItem> Children { get; set; } = new ObservableCollection<FolderItem>();
+
+    /// <summary>
+    /// 자식 아이템의 EffectiveIsExcluded 속성 변경을 재귀적으로 알립니다.
+    /// </summary>
+    private void UpdateChildrenEffectiveExclusion()
+    {
+        foreach (var child in Children)
+        {
+            // 자식의 EffectiveIsExcluded 값이 변할 수 있으므로 변경 알림 전송
+            child.OnPropertyChanged(nameof(EffectiveIsExcluded));
+            child.UpdateChildrenEffectiveExclusion();
+        }
+    }
 
     #region INotifyPropertyChanged 구현
     public event PropertyChangedEventHandler PropertyChanged;

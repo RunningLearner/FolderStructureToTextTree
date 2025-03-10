@@ -31,7 +31,6 @@ public class FolderTreeViewModel : INotifyPropertyChanged
 
         // 컬렉션 뷰 생성 및 필터 설정
         RootItemsView = CollectionViewSource.GetDefaultView(RootItems);
-        RootItemsView.Filter = ExcludeFilter;
     }
 
     private bool ExcludeFilter(object obj)
@@ -49,7 +48,6 @@ public class FolderTreeViewModel : INotifyPropertyChanged
         {
             item.IsExcluded = !item.IsExcluded;
             // 필터를 새로 고침하여 변경 반영
-            RootItemsView.Refresh();
         }
     }
 
@@ -72,13 +70,14 @@ public class FolderTreeViewModel : INotifyPropertyChanged
     /// </summary>
     /// <param name="path">폴더 경로</param>
     /// <returns>FolderItem 객체</returns>
-    private FolderItem CreateFolderItem(string path)
+    private FolderItem CreateFolderItem(string path, FolderItem parent = null)
     {
         var item = new FolderItem
         {
             Name = System.IO.Path.GetFileName(path),
             Path = path,
-            IsFolder = true
+            IsFolder = true,
+            Parent = parent
         };
 
         try
@@ -87,7 +86,7 @@ public class FolderTreeViewModel : INotifyPropertyChanged
             var directories = Directory.GetDirectories(path);
             foreach (var dir in directories)
             {
-                item.Children.Add(CreateFolderItem(dir));
+                item.Children.Add(CreateFolderItem(dir, item));
             }
 
             // 하위 파일 추가 (옵션: 파일도 표시하려면)
@@ -98,7 +97,8 @@ public class FolderTreeViewModel : INotifyPropertyChanged
                 {
                     Name = System.IO.Path.GetFileName(file),
                     Path = file,
-                    IsFolder = false
+                    IsFolder = false,
+                    Parent = item
                 });
             }
         }
